@@ -11,7 +11,7 @@ Na rozdíl od běžných kvízů bez přemýšlení musíš **psát japonské sl
 - Možnost „Po chybě automaticky přeskočit“
 
 ## 💻 Jak spustit
-Stačí otevřít `genki-full.html` v prohlížeči nebo navštívit  
+Stačí otevřít `genki-game.html` v prohlížeči nebo navštívit  
 👉 
 
 ## 🪪 Licence
