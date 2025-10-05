@@ -11,8 +11,8 @@ Na rozdíl od běžných kvízů bez přemýšlení musíš **psát japonské sl
 - Možnost „Po chybě automaticky přeskočit“
 
 ## 💻 Jak spustit
-Stačí otevřít `genki-game.html` v prohlížeči nebo navštívit  
-👉 
+Stačí otevřít `index.html` v prohlížeči nebo navštívit  
+👉 https://estermilostna.github.io/Genki1-procvicovani-slovicek/
 
 ## 🪪 Licence
 MIT License © 2025 Ester Milostná
