@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta name="description" content="Interaktivní hra na procvičování japonštiny podle učebnice Genki I. Procvičujte slovíčka psaním v japonštině.">
+<meta name="author" content="Ester Milostná">
+<meta property="og:title" content="Genki Vocabulary Trainer">
+<meta property="og:description" content="Procvič si japonštinu – slovíčka z Genki I psaním, ne klikáním!">
+<meta property="og:type" content="website">
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Genki – procvičování japonštiny</title>
+<style>
+:root{
+ --bg:#0b1220;--card:#101a2e;--muted:#7c8aa5;--accent:#7aa2ff;
+ --good:#35c759;--bad:#ff453a;--warn:#ff9f0a;--text:#e6ecff;
+}
+*{box-sizing:border-box;}
+body{
+ margin:0;font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;
+ background:radial-gradient(1200px 800px at 70% -10%,#132241 0%,var(--bg) 55%);
+ color:var(--text);display:grid;place-items:center;padding:24px;
+}
+.wrap{width:min(900px,100%);display:grid;gap:16px;}
+.card{
+ background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));
+ border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:20px;
+ box-shadow:0 10px 30px rgba(0,0,0,.35);backdrop-filter:blur(6px);
+}
+h1{margin:0 0 4px;font-size:clamp(20px,3.6vw,28px);}
+.sub{color:var(--muted);font-size:14px;}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+.grid{display:grid;grid-template-columns:1fr;gap:12px;}
+@media(min-width:720px){.grid{grid-template-columns:1.2fr .8fr;align-items:start;}}
+.prompt{
+ font-size:clamp(18px,4vw,24px);padding:16px;border-radius:14px;
+ background:var(--card);border:1px solid rgba(255,255,255,.07);
+}
+.big{font-size:clamp(20px,5vw,28px);font-weight:700;}
+input[type=text]{
+ width:100%;font-size:clamp(18px,4.5vw,24px);
+ padding:14px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.15);
+ background:#0f1830;color:var(--text);
+}
+.btn{border:1px solid rgba(255,255,255,.15);background:#0f1b35;
+ color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600;}
+.btn.primary{background:linear-gradient(180deg,#2748ff,#1b2dcc);border-color:#2b43ff;}
+.tag{background:#101b34;padding:6px 10px;border-radius:999px;font-size:12px;}
+.result{margin-top:8px;min-height:24px;font-weight:700;}
+.ok{color:var(--good);} .bad{color:var(--bad);}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.stat{text-align:center;padding:10px;border-radius:10px;background:#0d1730;border:1px solid rgba(255,255,255,.08);}
+.stat .v{font-weight:800;font-size:18px;}
+.small{font-size:12px;color:var(--muted);}
+.hr{height:1px;background:rgba(255,255,255,.08);margin:10px 0;}
+.tooltip{position:relative;display:inline-block;}
+.tooltip .tiptext{
+ visibility:hidden;width:220px;background:#182544;color:#fff;text-align:left;
+ border-radius:8px;padding:8px;position:absolute;z-index:1;bottom:125%;left:50%;
+ margin-left:-110px;opacity:0;transition:opacity .2s;font-size:12px;line-height:1.4;
+ border:1px solid rgba(255,255,255,.15);
+}
+.tooltip:hover .tiptext{visibility:visible;opacity:1;}
+.info{cursor:help;margin-left:4px;color:var(--accent);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="card">
+    <h1>Genki – procvičování japonštiny</h1>
+    <div class="sub">Zobrazí český význam → napiš japonsky (kana/kanji).  
+      Enter = potvrdit, Ctrl+Enter = přeskočit, ? = nápověda.</div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="flex-wrap:wrap;gap:14px;">
+      <label> Lekce:
+         <select id="lesson">
+    <option value="1" selected>1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+    <option value="4">4</option>
+    <option value="5">5</option>
+    <option value="6">6</option>
+    <option value="7">7</option>
+ <!--    <option value="8">8</option> -->
+ <!--    <option value="9">9</option> -->
+ <!--    <option value="10">10</option> -->
+ <!--    <option value="11">11</option> -->
+ <!--    <option value="12">12</option> -->
+  </select>
+      </label>
+      <label> Směr:
+        <select id="mode">
+          <option value="cz→jp" selected>Česky → Japonština</option>
+          <option value="jp→cz">Japonština → Česky</option>
+        </select>
+      </label>
+      <label><input type="checkbox" id="noRepeat" checked/> Bez opakování</label>
+      <label class="tooltip">
+        <input type="checkbox" id="strict"/> Přísné porovnání
+        <span class="info">ℹ️</span>
+        <span class="tiptext">V nepřísném režimu bere i varianty jako かわいい / カワイイ.  
+        Přísné porovnání rozlišuje hiraganu, katakanu i kanji (je třeba psát přesně).</span>
+      </label>
+<label><input type="checkbox" id="autoNext" /> Po chybě automaticky přeskočit</label>
+      <button id="reset" class="btn">↺ Reset</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="prompt">
+        <div class="small">Zadání</div>
+        <div id="cz" class="big">—</div>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <input id="ans" type="text" placeholder="napiš japonsky…" autofocus autocomplete="off"/>
+        <button id="submit" class="btn primary">Potvrdit</button>
+        <button id="skip" class="btn">Přeskočit</button>
+        <button id="hint" class="btn">Nápověda</button>
+      </div>
+      <div id="feedback" class="result"></div>
+    </div>
+
+    <div class="card">
+      <div class="tag">📊 Statistiky</div>
+      <div class="hr"></div>
+      <div class="stats">
+        <div class="stat"><div class="small">Správně</div><div id="ok" class="v">0</div></div>
+        <div class="stat"><div class="small">Chybně</div><div id="bad" class="v">0</div></div>
+        <div class="stat"><div class="small">Série</div><div id="streak" class="v">0</div></div>
+        <div class="stat"><div class="small">Čas</div><div id="time" class="v">0:00</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* === data pro víc lekcí (zkráceně, zbytek se později doplní) === */
+const LESSONS = {
+  1: [
+  { accepted: ["わたし"], promptCZ: "já" },
+  { accepted: ["あなた"], promptCZ: "ty" },
+  { accepted: ["せんせい"], promptCZ: "učitel" },
+  { accepted: ["がくせい"], promptCZ: "student" },
+  { accepted: ["りゅうがくせい"], promptCZ: "zahraniční student" },
+  { accepted: ["だいがく"], promptCZ: "univerzita" },
+  { accepted: ["ねんせい"], promptCZ: "ročník (student)" },
+  { accepted: ["いちねんせい"], promptCZ: "prvák" },
+  { accepted: ["せんこう"], promptCZ: "obor studia" },
+  { accepted: ["にほん"], promptCZ: "Japonsko" },
+  { accepted: ["アメリカ"], promptCZ: "Amerika" },
+  { accepted: ["イギリス"], promptCZ: "Anglie" },
+  { accepted: ["にほんじん"], promptCZ: "Japonec" },
+  { accepted: ["アメリカじん"], promptCZ: "Američan" },
+  { accepted: ["いま"], promptCZ: "teď" },
+  { accepted: ["なん"], promptCZ: "co (otázka)" },
+  { accepted: ["なんさい"], promptCZ: "kolik let (věk)" },
+  { accepted: ["じ"], promptCZ: "hodina" },
+  { accepted: ["ぷん"], promptCZ: "minuta" },
+  { accepted: ["ごぜん"], promptCZ: "dopoledne" },
+  { accepted: ["ごご"], promptCZ: "odpoledne" },
+  { accepted: ["～さい"], promptCZ: "věk" },
+  { accepted: ["～さん"], promptCZ: "zdvořilá koncovka" },
+  { accepted: ["～じん"], promptCZ: "národnost" },
+  { accepted: ["なんじ"], promptCZ: "kolik je hodin" },
+  { accepted: ["なんねんせい"], promptCZ: "který ročník" },
+  { accepted: ["はい"], promptCZ: "ano" },
+  { accepted: ["いいえ"], promptCZ: "ne" },
+  { accepted: ["～です"], promptCZ: "zdvořilý tvar slovesa být" },
+  { accepted: ["～の"], promptCZ: "spojka pro přívlastky" },
+  { accepted: ["でんわばんごう"], promptCZ: "telefonní číslo" },
+  { accepted: ["ばんごう"], promptCZ: "číslo" },
+  { accepted: ["れい"], promptCZ: "nula" },
+  { accepted: ["いち"], promptCZ: "jedna" },
+  { accepted: ["に"], promptCZ: "dva" },
+  { accepted: ["さん"], promptCZ: "tři" },
+  { accepted: ["よん","し"], promptCZ: "čtyři" },
+  { accepted: ["ご"], promptCZ: "pět" },
+  { accepted: ["ろく"], promptCZ: "šest" },
+  { accepted: ["なな","しち"], promptCZ: "sedm" },
+  { accepted: ["はち"], promptCZ: "osm" },
+  { accepted: ["きゅう","く"], promptCZ: "devět" },
+  { accepted: ["じゅう"], promptCZ: "deset" },
+  { accepted: ["じゅういち"], promptCZ: "jedenáct" },
+  { accepted: ["じゅうに"], promptCZ: "dvanáct" },
+],
+ 2: [
+  { accepted: ["これ"], promptCZ: "toto (u mě)" },
+  { accepted: ["それ"], promptCZ: "toto (u tebe)" },
+  { accepted: ["あれ"], promptCZ: "tamto (vzdálené)" },
+  { accepted: ["どれ"], promptCZ: "které" },
+
+  { accepted: ["この"], promptCZ: "tento" },
+  { accepted: ["その"], promptCZ: "ten" },
+  { accepted: ["あの"], promptCZ: "tamten" },
+  { accepted: ["どの"], promptCZ: "který" },
+
+  { accepted: ["ここ"], promptCZ: "tady" },
+  { accepted: ["そこ"], promptCZ: "tam " },
+  { accepted: ["あそこ"], promptCZ: "tam (daleko)" },
+  { accepted: ["どこ"], promptCZ: "kde" },
+
+  { accepted: ["だれ"], promptCZ: "kdo" },
+  { accepted: ["おいしい"], promptCZ: "chutný" },
+  { accepted: ["さかな"], promptCZ: "ryba" },
+  { accepted: ["とんかつ"], promptCZ: "smažené vepřové maso" },
+  { accepted: ["にく"], promptCZ: "maso" },
+  { accepted: ["やさい"], promptCZ: "zelenina" },
+  { accepted: ["かいしゃいん"], promptCZ: "zaměstnanec firmy" },
+  { accepted: ["いしゃ"], promptCZ: "lékař / doktor" },
+  { accepted: ["かいけいし"], promptCZ: "účetní" },
+  { accepted: ["べんごし"], promptCZ: "právník" },
+  { accepted: ["おかね"], promptCZ: "peníze" },
+  { accepted: ["つくえ"], promptCZ: "stůl" },
+  { accepted: ["とけい"], promptCZ: " hodinky" },
+  { accepted: ["ペン"], promptCZ: "pero" },
+  { accepted: ["じしょ"], promptCZ: "slovník" },
+  { accepted: ["かばん"], promptCZ: "taška" },
+  { accepted: ["くつ"], promptCZ: "boty" },
+  { accepted: ["さいふ"], promptCZ: "peněženka" },
+  { accepted: ["ジーンズ"], promptCZ: "džíny" },
+  { accepted: ["ぼうし"], promptCZ: "klobouk/čepice" },
+
+  { accepted: ["いくら"], promptCZ: "kolik" },
+  { accepted: ["えん"], promptCZ: "jen (japonská měna)" },
+
+  { accepted: ["たかい"], promptCZ: "drahý" },
+  { accepted: ["やすい"], promptCZ: "levný" },
+
+  { accepted: ["いらっしゃいませ"], promptCZ: "Vítejte (v obchodě / restauraci)" },
+  { accepted: ["ください"], promptCZ: "prosím (dejte mi ...)" },
+  { accepted: ["どうぞ"], promptCZ: "prosím (při nabízení)" },
+  { accepted: ["どうも"], promptCZ: "díky; zdvořilostní obrat" },
+],
+
+  3: [
+  // === Genki I – Lesson 3: Daily Activities ===
+  { accepted: ["えいが"], promptCZ: "film" },
+  { accepted: ["おんがく"], promptCZ: "hudba" },
+  { accepted: ["ざっし"], promptCZ: "časopis" },
+  { accepted: ["スポーツ"], promptCZ: "sport" },
+  { accepted: ["デート"], promptCZ: "rande" },
+  { accepted: ["テニス"], promptCZ: "tenis" },
+  { accepted: ["テレビ"], promptCZ: "televize" },
+  { accepted: ["あさごはん"], promptCZ: "snídaně" },
+  { accepted: ["ひるごはん"], promptCZ: "oběd" },
+  { accepted: ["ばんごはん"], promptCZ: "večeře" },
+  { accepted: ["うち"], promptCZ: "domov" },
+  { accepted: ["がっこう"], promptCZ: "škola" },
+  { accepted: ["あさ"], promptCZ: "ráno" },
+  { accepted: ["あした"], promptCZ: "zítra" },
+  { accepted: ["きょう"], promptCZ: "dnes" },
+  { accepted: ["まいにち"], promptCZ: "každý den" },
+  { accepted: ["まいばん"], promptCZ: "každý večer" },
+  { accepted: ["しゅうまつ"], promptCZ: "víkend" },
+  { accepted: ["どようび"], promptCZ: "sobota" },
+  { accepted: ["にちようび"], promptCZ: "neděle" },
+  { accepted: ["いく"], promptCZ: "jít" },
+  { accepted: ["かえる"], promptCZ: "vrátit se" },
+  { accepted: ["きく"], promptCZ: "poslouchat" },
+  { accepted: ["のむ"], promptCZ: "pít" },
+  { accepted: ["はなす"], promptCZ: "mluvit" },
+  { accepted: ["よむ"], promptCZ: "číst" },
+  { accepted: ["おきる"], promptCZ: "vstávat" },
+  { accepted: ["たべる"], promptCZ: "jíst" },
+  { accepted: ["ねる"], promptCZ: "spát" },
+  { accepted: ["みる"], promptCZ: "sledovat" },
+  { accepted: ["くる"], promptCZ: "přijít" },
+  { accepted: ["する"], promptCZ: "dělat" },
+  { accepted: ["べんきょうする"], promptCZ: "studovat" },
+  { accepted: ["いい"], promptCZ: "dobrý" },
+  { accepted: ["はやい"], promptCZ: "rychlý" },
+  { accepted: ["あまり"], promptCZ: "moc ne… (s negací)" },
+  { accepted: ["ぜんぜん"], promptCZ: "vůbec ne… (s negací)" },
+  { accepted: ["たいてい"], promptCZ: "obvykle" },
+  { accepted: ["ちょっと"], promptCZ: "trochu" },
+  { accepted: ["ときどき"], promptCZ: "občas" },
+  { accepted: ["よく"], promptCZ: "často" },
+  { accepted: ["そうです"], promptCZ: "to je pravda" },
+  { accepted: ["でも"], promptCZ: "ale" },
+  { accepted: ["どうですか"], promptCZ: "Jaké je to? Co říkáš na...?" },
+  { accepted: ["なに"], promptCZ: "co" },
+  { accepted: ["なんじ"], promptCZ: "kolik je hodin" },
+  { accepted: ["なんようび"], promptCZ: "který den" },
+  { accepted: ["～ごろ"], promptCZ: "okolo (čas)" },
+],
+
+ 4: [
+  { accepted: ["えいご"], promptCZ: "angličtina" },
+  { accepted: ["かいもの"], promptCZ: "nakupování" },
+  { accepted: ["クラス"], promptCZ: "třída" },
+  { accepted: ["いぬ"], promptCZ: "pes" },
+  { accepted: ["ねこ"], promptCZ: "kočka" },
+  { accepted: ["ひと"], promptCZ: "člověk" },
+  { accepted: ["こども"], promptCZ: "dítě" },
+  { accepted: ["ごはん"], promptCZ: "rýže/jídlo" },
+  { accepted: ["しゃしん"], promptCZ: "fotka" },
+  { accepted: ["つくえ"], promptCZ: "stůl" },
+  { accepted: ["てがみ"], promptCZ: "dopis" },
+  { accepted: ["ねこ"], promptCZ: "kočka" },
+  { accepted: ["パン"], promptCZ: "chléb" },
+  { accepted: ["ひと"], promptCZ: "člověk" },
+  { accepted: ["びよういん"], promptCZ: "kadeřnictví" },
+  { accepted: ["ほん"], promptCZ: "kniha" },
+  { accepted: ["まち"], promptCZ: "město" },
+  { accepted: ["レストラン"], promptCZ: "restaurace" },
+  { accepted: ["いす"], promptCZ: "židle" },
+  { accepted: ["おてら"], promptCZ: "chrám" },
+  { accepted: ["こうえん"], promptCZ: "park" },
+  { accepted: ["スーパー"], promptCZ: "supermarket" },
+  { accepted: ["デパート"], promptCZ: "obchodní dům" },
+  { accepted: ["びじゅつかん"], promptCZ: "muzeum umění" },
+  { accepted: ["ホテル"], promptCZ: "hotel" },
+  { accepted: ["ほんや"], promptCZ: "knihkupectví" },
+  { accepted: ["まえ"], promptCZ: "před (místně i časově)" },
+  { accepted: ["うしろ"], promptCZ: "za (místně)" },
+  { accepted: ["なか"], promptCZ: "uvnitř" },
+  { accepted: ["うえ"], promptCZ: "nahoře" },
+  { accepted: ["した"], promptCZ: "dole" },
+  { accepted: ["ちかく"], promptCZ: "blízko" },
+  { accepted: ["となり"], promptCZ: "vedle" },
+  { accepted: ["あいだ"], promptCZ: "mezi" },
+  { accepted: ["きのう"], promptCZ: "včera" },
+  { accepted: ["～じかん"], promptCZ: "… hodin (délka času)" },
+  { accepted: ["いちじかん"], promptCZ: "jednu hodinu" },
+  { accepted: ["せんしゅう"], promptCZ: "minulý týden" },
+  { accepted: ["とき"], promptCZ: "když; čas (moment)" },
+  { accepted: ["げつようび"], promptCZ: "pondělí" },
+  { accepted: ["かようび"], promptCZ: "úterý" },
+  { accepted: ["すいようび"], promptCZ: "středa" },
+  { accepted: ["もくようび"], promptCZ: "čtvrtek" },
+  { accepted: ["きんようび"], promptCZ: "pátek" },
+  { accepted: ["あう","会う"], promptCZ: "setkat se" },
+  { accepted: ["ある"], promptCZ: "být (neživé věci)" },
+  { accepted: ["かう"], promptCZ: "koupit" },
+  { accepted: ["かく"], promptCZ: "psát" },
+  { accepted: ["とる","撮る"], promptCZ: "fotit" },
+  { accepted: ["まつ"], promptCZ: "čekat" },
+  { accepted: ["わかる"], promptCZ: "rozumět; chápat" },
+  { accepted: ["いる"], promptCZ: "být (živé bytosti)" },
+  { accepted: ["～ぐらい"], promptCZ: "přibližně" },
+  { accepted: ["だから"], promptCZ: "proto" },
+  { accepted: ["たくさん"], promptCZ: "mnoho" },
+  { accepted: ["とても"], promptCZ: "velmi" },
+  { accepted: ["どうして"], promptCZ: "proč" },
+  { accepted: ["ひとりで"], promptCZ: "sám" },
+],
+
+ 5: [
+  // === Genki I – Lesson 5: 旅行と行き方 (Travel & Directions) ===
+  { accepted: ["うみ"], promptCZ: "moře" },
+  { accepted: ["きって"], promptCZ: "poštovní známka" },
+  { accepted: ["きっぷ"], promptCZ: "jízdenka" },
+  { accepted: ["サーフィン"], promptCZ: "surfování" },
+  { accepted: ["しゅくだい"], promptCZ: "domácí úkol" },
+  { accepted: ["たべもの"], promptCZ: "jídlo" },
+  { accepted: ["たんじょうび"], promptCZ: "narozeniny" },
+  { accepted: ["てんき"], promptCZ: "počasí" },
+  { accepted: ["のみもの"], promptCZ: "pití" },
+  { accepted: ["はがき"], promptCZ: "pohlednice" },
+  { accepted: ["バス"], promptCZ: "autobus" },
+  { accepted: ["ひこうき"], promptCZ: "letadlo" },
+  { accepted: ["へや"], promptCZ: "pokoj" },
+  { accepted: ["ぼく"], promptCZ: "já (používají muži)" },
+  { accepted: ["やすみ"], promptCZ: "volno" },
+  { accepted: ["りょこう"], promptCZ: "cestování" },
+  { accepted: ["あたらしい","新しい"], promptCZ: "nový" },
+  { accepted: ["あつい","暑い"], promptCZ: "horký (počasí)" },
+  { accepted: ["いそがしい"], promptCZ: "zaneprázdněný" },
+  { accepted: ["おおきい","大きい"], promptCZ: "velký" },
+  { accepted: ["おもしろい"], promptCZ: "zábavný" },
+  { accepted: ["かっこいい"], promptCZ: "cool" },
+  { accepted: ["こわい"], promptCZ: "strašidelný" },
+  { accepted: ["さむい","寒い"], promptCZ: "studený (počasí)" },
+  { accepted: ["たのしい"], promptCZ: "zábavný" },
+  { accepted: ["ちいさい","小さい"], promptCZ: "malý" },
+  { accepted: ["つまらない"], promptCZ: "nudný" },
+  { accepted: ["ふるい","古い"], promptCZ: "starý (věc, ne člověk)" },
+  { accepted: ["むずかしい"], promptCZ: "těžký (obtížný)" },
+  { accepted: ["やさしい"], promptCZ: "snadný/milý (člověk)" },
+  { accepted: ["やすい"], promptCZ: "levný" },
+  { accepted: ["きらい","嫌い"], promptCZ: "nemít rád" },
+  { accepted: ["きれい"], promptCZ: "krásný; čistý" },
+  { accepted: ["げんき","元気"], promptCZ: "energický/zdravý" },
+  { accepted: ["しずか","静か"], promptCZ: "klidný" },
+  { accepted: ["すき","好き"], promptCZ: "mít rád" },
+  { accepted: ["だいきらい","大嫌い"], promptCZ: "nenávidět" },
+  { accepted: ["だいすき","大好き"], promptCZ: "mít velmi rád" },
+  { accepted: ["にぎやか"], promptCZ: "živý (místo)" },
+  { accepted: ["ひま"], promptCZ: "volný (mít čas)" },
+  { accepted: ["およぐ","泳ぐ"], promptCZ: "plavat" },
+  { accepted: ["きく","聞く"], promptCZ: "ptát se/slyšet" },
+  { accepted: ["のる","乗る"], promptCZ: "jet" },
+  { accepted: ["やる"], promptCZ: "dělat; vykonávat (neformálně)" },
+  { accepted: ["でかける"], promptCZ: "vyjít ven; odejít" },
+  { accepted: ["いっしょに"], promptCZ: "společně" },
+  { accepted: ["すごく"], promptCZ: "velmi; hrozně moc" },
+  { accepted: ["だいじょうぶ"], promptCZ: "v pořádku; nevadí" },
+  { accepted: ["とても"], promptCZ: "velmi" },
+  { accepted: ["どんな"], promptCZ: "jaký (typ...)" },
+  { accepted: ["～まい"], promptCZ: "číslovka pro ploché věci (listy, papíry…)" },
+  { accepted: ["～まで"], promptCZ: "do (místo, čas)" },
+  { accepted: ["～と"], promptCZ: "s (spolu s někým)" },
+  { accepted: ["だいすきです"], promptCZ: "mám moc rád (zdvořile)" },
+],
+
+ 6: [
+  // === Genki I – Lesson 6: Weekend Activities ===
+  { accepted: ["おかね"], promptCZ: "peníze" },
+  { accepted: ["おふろ"], promptCZ: "koupel" },
+  { accepted: ["かんじ"], promptCZ: "znak kandži" },
+  { accepted: ["きょうかしょ"], promptCZ: "učebnice" },
+  { accepted: ["こんしゅう"], promptCZ: "tento týden" },
+  { accepted: ["しみんびょういん"], promptCZ: "městská nemocnice" },
+  { accepted: ["つぎ"], promptCZ: "další" },
+  { accepted: ["テレビゲーム"], promptCZ: "videohra" },
+  { accepted: ["でんしゃ"], promptCZ: "vlak" },
+  { accepted: ["にもつ"], promptCZ: "zavazadlo; balík" },
+  { accepted: ["ページ"], promptCZ: "stránka" },
+  { accepted: ["まど"], promptCZ: "okno" },
+  { accepted: ["よる"], promptCZ: "noc; večer" },
+  { accepted: ["らいしゅう"], promptCZ: "příští týden" },
+  { accepted: ["らいねん"], promptCZ: "příští rok" },
+  { accepted: ["らいげつ"], promptCZ: "příští měsíc" },
+
+  { accepted: ["たいへん"], promptCZ: "těžké; náročné (situace)" },
+  { accepted: ["おそく"], promptCZ: "pozdě" },
+
+  { accepted: ["あそぶ"], promptCZ: "bavit se; hrát si" },
+  { accepted: ["いそぐ"], promptCZ: "spěchat" },
+  { accepted: ["かえす"], promptCZ: "vrátit (věc)" },
+  { accepted: ["けす"], promptCZ: "vypnout; zhasnout" },
+  { accepted: ["しぬ"], promptCZ: "zemřít" },
+  { accepted: ["すわる"], promptCZ: "sednout si" },
+  { accepted: ["たつ"], promptCZ: "vstát" },
+  { accepted: ["たばこをすう"], promptCZ: "kouřit" },
+  { accepted: ["つかう"], promptCZ: "použít" },
+  { accepted: ["てつだう"], promptCZ: "pomoci" },
+  { accepted: ["はいる"], promptCZ: "vstoupit" },
+  { accepted: ["もつ"], promptCZ: "držet; nést" },
+  { accepted: ["やすむ"], promptCZ: "odpočívat; chybět (ve škole, práci)" },
+  { accepted: ["あける"], promptCZ: "otevřít (něco)" },
+  { accepted: ["おしえる"], promptCZ: "učit; vysvětlit" },
+  { accepted: ["おりる"], promptCZ: "vystoupit (z dopravního prostředku)" },
+  { accepted: ["かりる"], promptCZ: "půjčit si" },
+  { accepted: ["しめる"], promptCZ: "zavřít (něco)" },
+  { accepted: ["つける"], promptCZ: "zapnout (světlo, TV…)" },
+  { accepted: ["でんわをかける"], promptCZ: "telefonovat" },
+  { accepted: ["わすれる"], promptCZ: "zapomenout" },
+  { accepted: ["つれてくる"], promptCZ: "přivést (osobu)" },
+  { accepted: ["もってくる"], promptCZ: "přinést (věc)" },
+  { accepted: ["あとで"], promptCZ: "později" },
+  { accepted: ["おそく"], promptCZ: "pozdě" },
+  { accepted: ["けっこうです"], promptCZ: "ne, děkuji (zdvořile odmítnout)" },
+  { accepted: ["すぐ"], promptCZ: "hned; okamžitě" },
+  { accepted: ["ほんとうですか"], promptCZ: "opravdu?" },
+  { accepted: ["ゆっくり"], promptCZ: "pomalu; v klidu" },
+  { accepted: ["いいですよ"], promptCZ: "to je v pořádku; jasně" },
+  { accepted: ["～から"], promptCZ: "protože; od (čas, místo)" },
+  { accepted: ["どうぞ"], promptCZ: "prosím (nabídka)" },
+  { accepted: ["だから"], promptCZ: "proto; tudíž" },
+],
+
+  7: [
+    // === GENKI I – LESSON 7 ===
+    { accepted: ["あね"], promptCZ: "starší sestra (moje)" },
+    { accepted: ["アパート"], promptCZ: "apartmán" },
+    { accepted: ["いもうと"], promptCZ: "mladší sestra" },
+    { accepted: ["うた"], promptCZ: "píseň" },
+    { accepted: ["おじいさん"], promptCZ: "dědeček" },
+    { accepted: ["おとうと"], promptCZ: "mladší bratr" },
+    { accepted: ["おにいさん"], promptCZ: "starší bratr (cizí)" },
+    { accepted: ["おねえさん"], promptCZ: "starší sestra (cizí)" },
+    { accepted: ["おばあさん"], promptCZ: "babička" },
+    { accepted: ["男の人","おとこのひと"], promptCZ: "muž" },
+    { accepted: ["女の人","おんなのひと"], promptCZ: "žena" },
+    { accepted: ["かいしゃ"], promptCZ: "firma" },
+    { accepted: ["かぞく"], promptCZ: "rodina" },
+    { accepted: ["かみ"], promptCZ: "vlasy" },
+    { accepted: ["きょうだい"], promptCZ: "sourozenci" },
+    { accepted: ["くち"], promptCZ: "ústa" },
+    { accepted: ["くに"], promptCZ: "země, stát" },
+    { accepted: ["くるま"], promptCZ: "auto" },
+    { accepted: ["ゲーム"], promptCZ: "hra" },
+    { accepted: ["コンビニ"], promptCZ: "obchod " },
+    { accepted: ["サークル"], promptCZ: "kroužek/klub" },
+    { accepted: ["しょくどう"], promptCZ: "jídelna" },
+    { accepted: ["ちち"], promptCZ: "otec (můj)" },
+    { accepted: ["ディーブイディー","DVD","ﾃﾞｨｰﾌﾞｲﾃﾞｨｰ"], promptCZ: "DVD" },
+    { accepted: ["はは"], promptCZ: "matka (má)" },
+    { accepted: ["め"], promptCZ: "oko" },
+    { accepted: ["めがね","眼鏡"], promptCZ: "brýle" },
+    { accepted: ["あたまがいい"], promptCZ: "chytrý" },
+    { accepted: ["かわいい"], promptCZ: "roztomilý" },
+    { accepted: ["せがたかい","背が高い"], promptCZ: "vysoký (postavou)" },
+    { accepted: ["せがひくい","背が低い"], promptCZ: "malý (postavou)" },
+    { accepted: ["ながい","長い"], promptCZ: "dlouhý" },
+    { accepted: ["みじかい","短い"], promptCZ: "krátký (délka)" },
+    { accepted: ["しんせつ","親切"], promptCZ: " milý" },
+    { accepted: ["べんり","便利"], promptCZ: "pohodlný" },
+    { accepted: ["うたう","歌う"], promptCZ: "zpívat" },
+    { accepted: ["かぶる"], promptCZ: "nasadit si (na hlavu)" },
+    { accepted: ["はく"], promptCZ: "obléknout (spodní část těla)" },
+    { accepted: ["しる","知る"], promptCZ: "poznat" },
+    { accepted: ["すむ","住む"], promptCZ: "bydlet" },
+    { accepted: ["めがねをかける","眼鏡をかける"], promptCZ: "nasadit si brýle" },
+    { accepted: ["きる","着る"], promptCZ: "obléknout (nahoře)" },
+    { accepted: ["つとめる","勤める"], promptCZ: "být zaměstnán" },
+    { accepted: ["ふとる","太る"], promptCZ: "přibrat" },
+    { accepted: ["やせる"], promptCZ: "zhubnout" },
+    { accepted: ["けっこんする","結婚する"], promptCZ: "oženit se / vdát se" },
+    { accepted: ["～が"], promptCZ: "ale (přechod mezi větami)" },
+    { accepted: ["なにも"], promptCZ: "nic (s negací)" },
+    { accepted: ["～にん","にん"], promptCZ: "počet lidí" },
+    { accepted: ["ひとり","一人"], promptCZ: "jedna osoba" },
+    { accepted: ["ふたり","二人"], promptCZ: "dvě osoby" },
+    { accepted: ["べつに"], promptCZ: "nijak zvlášť" },
+    { accepted: ["もしもし"], promptCZ: "haló" },
+    { accepted: ["もちろん"], promptCZ: "samozřejmě" },
+    { accepted: ["よかったら"], promptCZ: "pokud chceš" },
+  ],
+  8: [
+    // Lesson 8 – bude doplněna později
+  ],
+  9: [
+    // Lesson 9
+  ],
+  10: [
+    // Lesson 10
+  ],
+  11: [
+    // Lesson 11
+  ],
+  12: [
+    // Lesson 12
+  ],
+};
+
+/* === pomocné funkce === */
+const nfkc=s=>s.normalize("NFKC").trim();
+const canonJP=(s,strict)=>nfkc(s)
+ .replace(/\s+/g,"").replace(/[・･\u30FB]/g,"").replace(/[〜～]/g,"～");
+const equalsJP=(a,b,strict)=>canonJP(a,strict)===canonJP(b,strict);
+function formatTime(sec){const m=Math.floor(sec/60);return m+":"+String(sec%60).padStart(2,"0");}
+
+/* === stav === */
+let vocab=[],queue=[],current=null,ok=0,bad=0,streak=0,start=Date.now(),timer=null;
+
+/* === elementy === */
+const E=id=>document.getElementById(id);
+const els={
+ cz:E("cz"),ans:E("ans"),submit:E("submit"),skip:E("skip"),hint:E("hint"),
+ feedback:E("feedback"),lesson:E("lesson"),mode:E("mode"),strict:E("strict"),
+ noRepeat:E("noRepeat"),reset:E("reset"),ok:E("ok"),bad:E("bad"),
+ streak:E("streak"),time:E("time"), autoNext:E("autoNext") 
+};
+
+/* === logika === */
+function reshuffle(){queue=[...vocab.keys()];for(let i=queue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[queue[i],queue[j]]=[queue[j],queue[i]];}}
+function pickNext(){
+ if(els.noRepeat.checked){if(queue.length===0)reshuffle();current=queue.shift();}
+ else current=Math.floor(Math.random()*vocab.length);
+ const it=vocab[current];
+ els.cz.textContent=(els.mode.value==="cz→jp")?it.promptCZ:it.accepted[0];
+ els.ans.value="";els.feedback.textContent="";
+}
+function updateStats(){els.ok.textContent=ok;els.bad.textContent=bad;els.streak.textContent=streak;}
+function startClock(){if(timer)clearInterval(timer);start=Date.now();
+ timer=setInterval(()=>{const s=Math.floor((Date.now()-start)/1000);els.time.textContent=formatTime(s);},500);}
+function check() {
+  const it = vocab[current],
+        u = els.ans.value,
+        strict = els.strict.checked;
+
+  if (els.mode.value === "cz→jp") {
+    const pass = it.accepted.some(a => equalsJP(u, a, strict));
+    if (pass) {
+      ok++; streak++;
+      els.feedback.textContent = "✅ Správně";
+      updateStats();
+      setTimeout(pickNext, 400);
+    } else {
+      bad++; streak = 0;
+      els.feedback.textContent = "❌ " + it.accepted.join(" / ");
+      updateStats();
+
+      // 💡 nový kód:
+      if (els.autoNext && els.autoNext.checked) {
+        setTimeout(pickNext, 800); // po 0.8 s zobrazí nové slovo
+      }
+    }
+  } else {
+    const target = nfkc(it.promptCZ);
+    const pass = u.includes(target.slice(0, 2));
+    if (pass) {
+      ok++; streak++;
+      els.feedback.textContent = "✅ OK";
+      setTimeout(pickNext, 400);
+    } else {
+      bad++; streak = 0;
+      els.feedback.textContent = "❌ " + it.promptCZ;
+      // 💡 a tady totéž:
+      if (els.autoNext && els.autoNext.checked) {
+        setTimeout(pickNext, 800);
+      }
+    }
+    updateStats();
+  }
+}
+
+function hint(){const it=vocab[current],base=it.accepted[0];
+ const len=Math.min(els.ans.value.length+1,base.length);els.ans.value=base.slice(0,len);
+ els.feedback.textContent="💡 Nápověda: "+base.slice(0,len)+"…";}
+function skip(){bad++;streak=0;updateStats();pickNext();}
+function changeLesson(){const n=els.lesson.value;vocab=LESSONS[n]||[];reshuffle();pickNext();startClock();updateStats();}
+
+/* === ovládání === */
+els.submit.onclick=check;els.skip.onclick=skip;els.hint.onclick=hint;
+els.lesson.onchange=changeLesson;els.mode.onchange=pickNext;
+els.reset.onclick=()=>{ok=bad=streak=0;updateStats();reshuffle();pickNext();startClock();}
+document.addEventListener("keydown",e=>{
+ if(e.key==="Enter"&&e.ctrlKey){e.preventDefault();skip();}
+ else if(e.key==="Enter"){e.preventDefault();check();}
+ else if(e.key==="?"){e.preventDefault();hint();}
+});
+
+/* === start === */
+changeLesson();
+</script>
+</body>
+</html>
