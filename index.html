@@ -788,6 +788,21 @@ function check() {
     updateStats();
   }
 
+// === nová logika nápovědy ===
+let hintLen = 1;
+
+function pickNext() {
+  hintLen = 1;
+  const arr = vocab;
+  if (!arr || arr.length === 0) return;
+  current = Math.floor(Math.random() * arr.length);
+  const it = arr[current];
+  els.cz.textContent =
+    els.mode.value === "cz→jp" ? it.promptCZ : it.accepted[0];
+  els.feedback.textContent = "";
+  els.ans.value = "";
+  els.ans.focus();
+}
 
 function hint() {
   const it = vocab[current];
@@ -799,7 +814,6 @@ function hint() {
   const suffix = hintLen < fullAnswer.length ? "…" : "";
   els.feedback.textContent = "💡 Nápověda: " + hint + suffix;
 }
-
 function skip(){bad++;streak=0;updateStats();pickNext();}
 function changeLesson(){const n=els.lesson.value;vocab=LESSONS[n]||[];reshuffle();pickNext();startClock();updateStats();}
 
