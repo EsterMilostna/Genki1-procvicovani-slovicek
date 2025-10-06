@@ -789,9 +789,17 @@ function check() {
   }
 }
 
-function hint(){const it=vocab[current],base=it.accepted[0];
- const len=Math.min(els.ans.value.length+1,base.length);els.ans.value=base.slice(0,len);
- els.feedback.textContent="💡 Nápověda: "+base.slice(0,len)+"…";}
+function hint() {
+  const it = vocab[current];
+  const fullAnswer =
+    els.mode.value === "cz→jp" ? it.accepted[0] : it.promptCZ;
+
+  hintLen = Math.min(hintLen + 1, fullAnswer.length);
+  const hint = fullAnswer.slice(0, hintLen);
+  const suffix = hintLen < fullAnswer.length ? "…" : "";
+  els.feedback.textContent = "💡 Nápověda: " + hint + suffix;
+}
+
 function skip(){bad++;streak=0;updateStats();pickNext();}
 function changeLesson(){const n=els.lesson.value;vocab=LESSONS[n]||[];reshuffle();pickNext();startClock();updateStats();}
 
