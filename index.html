@@ -857,7 +857,17 @@ function changeLesson() {
 
 /* === ovládání === */
 els.submit.onclick=check;els.skip.onclick=skip;els.hint.onclick=hint;
-els.lesson.onchange=changeLesson;els.mode.onchange=pickNext;
+els.lesson.onchange=changeLesson;
+els.mode.onchange = () => {
+  // změna textu v políčku podle směru překladu
+  if (els.mode.value === "cz→jp") {
+    els.ans.placeholder = "napiš japonsky";
+  } else {
+    els.ans.placeholder = "napiš česky";
+  }
+  pickNext();
+};
+
 els.reset.onclick=()=>{ok=bad=streak=0;updateStats();reshuffle();pickNext();startClock();}
 document.addEventListener("keydown",e=>{
  if(e.key==="Enter"&&e.ctrlKey){e.preventDefault();skip();}
