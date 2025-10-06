@@ -737,17 +737,47 @@ const els={
 };
 
 /* === logika === */
-function reshuffle(){queue=[...vocab.keys()];for(let i=queue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[queue[i],queue[j]]=[queue[j],queue[i]];}}
-function pickNext(){
- if(els.noRepeat.checked){if(queue.length===0)reshuffle();current=queue.shift();}
- else current=Math.floor(Math.random()*vocab.length);
- const it=vocab[current];
- els.cz.textContent=(els.mode.value==="cz→jp")?it.promptCZ:it.accepted[0];
- els.ans.value="";els.feedback.textContent="";
+function reshuffle() {
+  queue = [...vocab.keys()];
+  for (let i = queue.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [queue[i], queue[j]] = [queue[j], queue[i]];
+  }
 }
-function updateStats(){els.ok.textContent=ok;els.bad.textContent=bad;els.streak.textContent=streak;}
-function startClock(){if(timer)clearInterval(timer);start=Date.now();
- timer=setInterval(()=>{const s=Math.floor((Date.now()-start)/1000);els.time.textContent=formatTime(s);},500);}
+
+function pickNext() {
+  hintLen = 1; // reset nápovědy
+
+  if (els.noRepeat && els.noRepeat.checked) {
+    if (queue.length === 0) reshuffle();
+    current = queue.shift();
+  } else {
+    current = Math.floor(Math.random() * vocab.length);
+  }
+
+  const it = vocab[current];
+  els.cz.textContent =
+    els.mode.value === "cz→jp" ? it.promptCZ : it.accepted[0];
+  els.ans.value = "";
+  els.feedback.textContent = "";
+  els.ans.focus();
+}
+
+function updateStats() {
+  els.ok.textContent = ok;
+  els.bad.textContent = bad;
+  els.streak.textContent = streak;
+}
+
+function startClock() {
+  if (timer) clearInterval(timer);
+  start = Date.now();
+  timer = setInterval(() => {
+    const s = Math.floor((Date.now() - start) / 1000);
+    els.time.textContent = formatTime(s);
+  }, 500);
+}
+
 function check() {
   const it = vocab[current],
         u = els.ans.value,
@@ -756,66 +786,74 @@ function check() {
   if (els.mode.value === "cz→jp") {
     const pass = it.accepted.some(a => equalsJP(u, a, strict));
     if (pass) {
-      ok++; streak++;
+      ok++;
+      streak++;
       els.feedback.textContent = "✅ Správně";
       updateStats();
       setTimeout(pickNext, 400);
     } else {
-      bad++; streak = 0;
+      bad++;
+      streak = 0;
       els.feedback.textContent = "❌ " + it.accepted.join(" / ");
       updateStats();
 
-      // 💡 nový kód:
+      // automatické pokračování po chybě
       if (els.autoNext && els.autoNext.checked) {
-        setTimeout(pickNext, 800); // po 0.8 s zobrazí nové slovo
+        setTimeout(pickNext, 800);
       }
     }
   } else {
     const target = nfkc(it.promptCZ);
     const pass = u.includes(target.slice(0, 2));
     if (pass) {
-      ok++; streak++;
+      ok++;
+      streak++;
       els.feedback.textContent = "✅ OK";
       setTimeout(pickNext, 400);
     } else {
-      bad++; streak = 0;
+      bad++;
+      streak = 0;
       els.feedback.textContent = "❌ " + it.promptCZ;
-      // 💡 a tady totéž:
       if (els.autoNext && els.autoNext.checked) {
         setTimeout(pickNext, 800);
       }
     }
     updateStats();
-  } }
+  }
+}
 
 // === nová logika nápovědy ===
 let hintLen = 1;
-
-function pickNext() {
-  hintLen = 1;
-  const arr = vocab;
-  if (!arr || arr.length === 0) return;
-  current = Math.floor(Math.random() * arr.length);
-  const it = arr[current];
-  els.cz.textContent =
-    els.mode.value === "cz→jp" ? it.promptCZ : it.accepted[0];
-  els.feedback.textContent = "";
-  els.ans.value = "";
-  els.ans.focus();
-}
 
 function hint() {
   const it = vocab[current];
   const fullAnswer =
     els.mode.value === "cz→jp" ? it.accepted[0] : it.promptCZ;
 
+  // přidej další znak, nikdy nepřekroč délku odpovědi
   hintLen = Math.min(hintLen + 1, fullAnswer.length);
+
   const hint = fullAnswer.slice(0, hintLen);
   const suffix = hintLen < fullAnswer.length ? "…" : "";
   els.feedback.textContent = "💡 Nápověda: " + hint + suffix;
 }
-function skip(){bad++;streak=0;updateStats();pickNext();}
-function changeLesson(){const n=els.lesson.value;vocab=LESSONS[n]||[];reshuffle();pickNext();startClock();updateStats();}
+
+function skip() {
+  bad++;
+  streak = 0;
+  updateStats();
+  pickNext();
+}
+
+function changeLesson() {
+  const n = els.lesson.value;
+  vocab = LESSONS[n] || [];
+  reshuffle();
+  pickNext();
+  startClock();
+  updateStats();
+}
+
 
 /* === ovládání === */
 els.submit.onclick=check;els.skip.onclick=skip;els.hint.onclick=hint;
