@@ -1,6 +1,6 @@
 # Genki1-procvicovani-slovicek
 
-Interaktivní webová hra na procvičování japonštiny podle učebnice **Genki I**.  
+Interaktivní webová hra na procvičování japonštiny podle učebnice **Genki I**.  (Norimov, Mukhammad. Genki - Elementary Japanese I.)
 Na rozdíl od běžných kvízů bez přemýšlení musíš **psát japonské slovo přesně** – s hiraganou nebo kanou.
 
 ## ✨ Funkce
