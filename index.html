@@ -88,7 +88,8 @@ input[type=text]{
     <option value="9">9</option>
     <option value="10">10</option>
     <option value="11">11</option>
-    <option value="12">12</option> 
+    <option value="12">12</option>
+    <option value="all">Vše</option>      
   </select>
       </label>
       <label> Směr:
@@ -847,7 +848,13 @@ function skip() {
 
 function changeLesson() {
   const n = els.lesson.value;
-  vocab = LESSONS[n] || [];
+
+  if (n === "all") {
+    vocab = Object.values(LESSONS).flat();
+  } else {
+    vocab = LESSONS[n] || [];
+  }
+
   reshuffle();
   pickNext();
   startClock();
